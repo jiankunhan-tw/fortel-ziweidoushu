@@ -21,7 +21,7 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "ts-node ./src/main.ts",
+    "start": "node server.js",
     "prebuild": "rimraf build",
     "build": "tsc",
     "watch": "tsc --watch",
