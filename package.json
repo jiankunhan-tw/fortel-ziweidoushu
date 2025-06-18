@@ -55,7 +55,6 @@
   },
   "dependencies": {
     "util": "^0.12.5",
-    "express": "^4.19.2",
-    "solarlunar": "^1.0.7"
+    "express": "^4.19.2"
   }
 }
