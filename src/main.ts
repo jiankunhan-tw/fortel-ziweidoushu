@@ -1,4 +1,4 @@
-import { Calendar, CalendarType } from './calendar/calender'
+import { Calendar, CalendarType } from './calendar/calendar'
 import { defaultCalendar } from './calendar/defaultCalendar'
 import { BoardCriteria, CellsScope } from './criteria/boardCriteria'
 import { DestinyConfigBuilder } from './util/destinyConfigBuilder'
@@ -18,34 +18,25 @@ import { StarDerivative } from './model/starDerivative'
 import { Temple } from './model/temple'
 import { destinyConfigTextParser } from './util/destinyConfigTextParser'
 import { starByName, starByKey } from './util/starUtil'
-import { lunarToSolar } from './util/lunarToSolar' // ✅ 新增這行
 
 import type { RuntimeContext } from './model/destinyBoard'
 
-// prettier-ignore
 export {
-  // config
   DestinyConfig,
   ConfigType,
   Gender,
   DayTimeGround,
   DestinyConfigBuilder,
   destinyConfigTextParser,
-  // criteria
   BoardCriteria, CellsScope,
-  // model classes
   Sky, Ground, DestinyBoard,
   Cell, BorrowCell, Temple,
   MajorStar, MinorStar, MiniStar,
   RuntimeContext,
   StarDerivative, Runtime,
-  // misc enums
   LifeStage, Element, Luckiness, ShadowLight, Direction,
-  // calendar
   defaultCalendar, CalendarType,
-  // util
-  starByName, starByKey,
-  lunarToSolar // ✅ 新增這行
+  starByName, starByKey
 }
 
 export type { Calendar }
