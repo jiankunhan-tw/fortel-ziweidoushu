@@ -18,7 +18,6 @@ import { StarDerivative } from './model/starDerivative'
 import { Temple } from './model/temple'
 import { destinyConfigTextParser } from './util/destinyConfigTextParser'
 import { starByName, starByKey } from './util/starUtil'
-import { lunarToSolar } from './util/lunarToSolar' // ✅ 新增的轉換工具
 
 import type { RuntimeContext } from './model/destinyBoard'
 
@@ -52,7 +51,6 @@ export {
   starByName, starByKey,
 
   // ✅ custom lunar util
-  lunarToSolar
 }
 
 export type { Calendar }
