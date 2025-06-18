@@ -18,7 +18,6 @@ import { StarDerivative } from './model/starDerivative'
 import { Temple } from './model/temple'
 import { destinyConfigTextParser } from './util/destinyConfigTextParser'
 import { starByName, starByKey } from './util/starUtil'
-
 import type { RuntimeContext } from './model/destinyBoard'
 
 // prettier-ignore
@@ -48,9 +47,7 @@ export {
   defaultCalendar, CalendarType,
 
   // util
-  starByName, starByKey,
-
-  // ✅ custom lunar util
+  starByName, starByKey
 }
 
 export type { Calendar }
