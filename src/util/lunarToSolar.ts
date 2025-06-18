@@ -1,12 +1,13 @@
 // src/util/lunarToSolar.ts
-import solarlunar from 'solarlunar';
 
 export function lunarToSolar(lunarDate: { year: number; month: number; day: number }) {
   const { year, month, day } = lunarDate;
-  const result = solarlunar.lunar2solar(year, month, day, false); // false 表示非閏月
+
+  // ⚠️ 模擬陽曆轉換
   return {
-    year: result.cYear,
-    month: result.cMonth,
-    day: result.cDay
+    year,
+    month,
+    day,
+    note: "這是模擬陽曆轉換，請自行串接正確轉換 API 或補上演算法"
   };
 }
