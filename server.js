@@ -1,152 +1,122 @@
 const express = require('express');
-
-console.log('載入紫微斗數套件...');
 const { DestinyBoard, DestinyConfigBuilder, DayTimeGround, ConfigType, Gender } = require('fortel-ziweidoushu');
-console.log('套件載入成功！');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
-// 根路徑
-app.get('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Ziwei API Server is running!',
-    endpoints: {
-      'POST /ziwei': '排盤 API',
-      'GET /health': '健康檢查',
-      'GET /test-hours': '測試時辰'
-    }
-  });
-});
+// 基本路由
+app.get('/', (req, res) => res.json({ status: 'ok' }));
+app.get('/health', (req, res) => res.json({ status: 'healthy' }));
 
-// 健康檢查
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
-    service: 'ziwei-api',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 測試時辰 - 詳細版本
-app.get('/test-hours', (req, res) => {
-  const testCases = ['子時', '寅時', '午時'];
-  const results = testCases.map(testCase => {
+// 測試時辰格式
+app.get('/test-time', (req, res) => {
+  // 創建標準時辰字符串
+  const standardTimes = {
+    '子時': '子時',
+    '丑時': '丑時', 
+    '寅時': '寅時',
+    '卯時': '卯時',
+    '辰時': '辰時',
+    '巳時': '巳時',
+    '午時': '午時',
+    '未時': '未時',
+    '申時': '申時',
+    '酉時': '酉時',
+    '戌時': '戌時',
+    '亥時': '亥時'
+  };
+  
+  const results = Object.keys(standardTimes).map(timeStr => {
     try {
-      console.log('測試時辰:', testCase, '字節長度:', testCase.length, '字符碼:', [...testCase].map(c => c.charCodeAt(0)));
-      
-      // 直接測試 DayTimeGround
-      const ground = DayTimeGround.getByName(testCase);
+      const ground = DayTimeGround.getByName(timeStr);
       return { 
-        input: testCase,
-        length: testCase.length,
-        charCodes: [...testCase].map(c => c.charCodeAt(0)),
-        status: 'success',
-        ground: ground ? ground.toString() : 'null'
+        time: timeStr, 
+        charCodes: [...timeStr].map(c => c.charCodeAt(0)),
+        status: 'success', 
+        result: ground?.toString() 
       };
     } catch (e) {
       return { 
-        input: testCase,
-        length: testCase.length, 
-        charCodes: [...testCase].map(c => c.charCodeAt(0)),
+        time: timeStr, 
+        charCodes: [...timeStr].map(c => c.charCodeAt(0)),
         status: 'error', 
-        error: e.message 
+        message: e.message 
       };
     }
   });
-  
-  // 測試套件是否正常載入
-  try {
-    const testConfig = DestinyConfigBuilder.withSolar({
-      year: 1990,
-      month: 5,
-      day: 15,
-      bornTimeGround: DayTimeGround.getByName('寅時'),
-      configType: ConfigType.SKY,
-      gender: Gender.M
-    });
-    results.push({
-      test: 'complete_test',
-      status: 'success',
-      message: '完整測試成功'
-    });
-  } catch (e) {
-    results.push({
-      test: 'complete_test', 
-      status: 'error',
-      error: e.message
-    });
-  }
   
   res.json(results);
 });
 
-// 紫微斗數排盤 API - 簡化版
+// 排盤 API - 使用標準時辰對照
 app.post('/ziwei', (req, res) => {
-  console.log('=== 收到排盤請求 ===');
-  console.log('原始參數:', JSON.stringify(req.body, null, 2));
+  console.log('收到請求:', JSON.stringify(req.body));
   
   try {
     const { year, month, day, hour, gender } = req.body;
     
-    // 參數驗證
     if (!year || !month || !day || !hour || !gender) {
+      return res.status(400).json({ error: '參數不完整' });
+    }
+    
+    console.log('原始時辰:', hour, '字符碼:', [...hour].map(c => c.charCodeAt(0)));
+    
+    // 使用標準時辰對照表
+    const timeMapping = {
+      '子時': '子時', '丑時': '丑時', '寅時': '寅時', '卯時': '卯時',
+      '辰時': '辰時', '巳時': '巳時', '午時': '午時', '未時': '未時', 
+      '申時': '申時', '酉時': '酉時', '戌時': '戌時', '亥時': '亥時'
+    };
+    
+    // 創建新的標準時辰字符串
+    let standardHour = null;
+    if (timeMapping[hour]) {
+      standardHour = timeMapping[hour];
+    } else {
+      // 嘗試重新構建字符串
+      if (hour.includes('子')) standardHour = '子時';
+      else if (hour.includes('丑')) standardHour = '丑時';
+      else if (hour.includes('寅')) standardHour = '寅時';
+      else if (hour.includes('卯')) standardHour = '卯時';
+      else if (hour.includes('辰')) standardHour = '辰時';
+      else if (hour.includes('巳')) standardHour = '巳時';
+      else if (hour.includes('午')) standardHour = '午時';
+      else if (hour.includes('未')) standardHour = '未時';
+      else if (hour.includes('申')) standardHour = '申時';
+      else if (hour.includes('酉')) standardHour = '酉時';
+      else if (hour.includes('戌')) standardHour = '戌時';
+      else if (hour.includes('亥')) standardHour = '亥時';
+    }
+    
+    console.log('標準時辰:', standardHour, '字符碼:', standardHour ? [...standardHour].map(c => c.charCodeAt(0)) : 'null');
+    
+    if (!standardHour) {
       return res.status(400).json({
-        error: '參數不完整',
-        required: ['year', 'month', 'day', 'hour', 'gender'],
-        received: { year, month, day, hour, gender }
+        error: '無法識別時辰',
+        原始時辰: hour,
+        原始字符碼: [...hour].map(c => c.charCodeAt(0)),
+        支援的時辰: Object.keys(timeMapping)
       });
     }
     
-    // 詳細檢查時辰
-    console.log('檢查時辰參數:');
-    console.log('- 時辰值:', hour);
-    console.log('- 時辰型別:', typeof hour);
-    console.log('- 時辰長度:', hour.length);
-    console.log('- 字符碼:', [...hour].map(c => c.charCodeAt(0)));
-    
-    // 清理時辰字串（移除可能的隱藏字符）
-    const cleanHour = hour.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
-    console.log('清理後時辰:', cleanHour, '長度:', cleanHour.length);
-    
     // 測試時辰轉換
-    console.log('測試 DayTimeGround.getByName...');
     let timeGround;
     try {
-      timeGround = DayTimeGround.getByName(cleanHour);
-      console.log('時辰轉換成功!', timeGround);
-    } catch (timeError) {
-      console.log('時辰轉換失敗:', timeError.message);
-      
-      // 嘗試其他可能的格式
-      const alternatives = ['子時', '丑時', '寅時', '卯時', '辰時', '巳時', '午時', '未時', '申時', '酉時', '戌時', '亥時'];
-      const found = alternatives.find(alt => {
-        try {
-          DayTimeGround.getByName(alt);
-          return true;
-        } catch {
-          return false;
-        }
-      });
-      
+      timeGround = DayTimeGround.getByName(standardHour);
+      console.log('時辰轉換成功:', standardHour, '->', timeGround);
+    } catch (e) {
+      console.log('時辰轉換失敗:', e.message);
       return res.status(400).json({
         error: '時辰轉換失敗',
-        原始時辰: hour,
-        清理後時辰: cleanHour,
-        時辰字符碼: [...cleanHour].map(c => c.charCodeAt(0)),
-        錯誤訊息: timeError.message,
-        測試結果: found ? `找到有效時辰: ${found}` : '所有標準時辰都無法使用',
-        建議: '檢查套件版本或時辰格式'
+        標準時辰: standardHour,
+        錯誤: e.message
       });
     }
     
     // 轉換性別
     const genderEnum = (gender === 'F' || gender === 'female' || gender === '女') ? Gender.F : Gender.M;
-    console.log('性別轉換:', gender, '->', genderEnum === Gender.F ? 'F' : 'M');
     
-    // 建立設定
-    console.log('建立排盤設定...');
+    // 建立設定並排盤
     const config = DestinyConfigBuilder.withSolar({
       year: parseInt(year),
       month: parseInt(month),
@@ -155,46 +125,30 @@ app.post('/ziwei', (req, res) => {
       configType: ConfigType.SKY,
       gender: genderEnum
     });
-    console.log('設定建立成功');
     
-    // 排盤
-    console.log('開始排盤...');
     const destinyBoard = new DestinyBoard(config);
-    console.log('排盤完成！');
+    console.log('排盤成功!');
     
     res.json({
       success: true,
       data: destinyBoard,
-      debug: {
+      meta: {
         原始時辰: hour,
-        清理後時辰: cleanHour,
-        轉換結果: timeGround?.toString(),
-        性別轉換: genderEnum === Gender.F ? 'F' : 'M'
+        使用的標準時辰: standardHour,
+        性別: genderEnum === Gender.F ? 'F' : 'M'
       }
     });
     
   } catch (e) {
-    console.error('=== 排盤發生錯誤 ===');
-    console.error('錯誤類型:', e.constructor.name);
-    console.error('錯誤訊息:', e.message);
-    console.error('錯誤堆疊:', e.stack);
-    
+    console.error('排盤錯誤:', e.message);
     res.status(500).json({ 
       error: '排盤錯誤', 
-      message: e.message,
-      errorType: e.constructor.name,
-      params: req.body
+      message: e.message
     });
   }
 });
 
 const port = process.env.PORT || 3000;
-
 app.listen(port, '0.0.0.0', () => {
-  console.log(`=== Ziwei API 啟動成功 ===`);
-  console.log(`Server: http://0.0.0.0:${port}`);
-  console.log(`API: http://0.0.0.0:${port}/ziwei`);
-  console.log(`健康檢查: http://0.0.0.0:${port}/health`);
-  console.log(`時辰測試: http://0.0.0.0:${port}/test-hours`);
-  console.log('==============================');
+  console.log(`Ziwei API running on port ${port}`);
 });
