@@ -116,19 +116,86 @@ try {
         });
       }
       
-      // 嘗試轉換時辰
+      // 嘗試轉換時辰，特殊處理子時
       let timeGround;
-      try {
-        timeGround = DayTimeGround.getByName(hour);
-        console.log('時辰轉換結果:', timeGround);
-      } catch (e) {
-        console.error('時辰轉換錯誤:', e);
-        return res.status(400).json({
-          error: '時辰轉換失敗',
-          message: e.message,
-          inputHour: hour,
-          suggestion: '請確認時辰格式正確，例如：子時、丑時、寅時等'
-        });
+      
+      // 針對子時的特殊處理 - 先嘗試其他可能的格式
+      if (hour === '子時') {
+        console.log('檢測到子時，嘗試各種可能的格式...');
+        
+        const possibleFormats = [
+          '子時',  // 原本的格式
+          '子',    // 簡化格式
+          'zi',    // 拼音小寫
+          'ZI',    // 拼音大寫
+          '子时',  // 簡體字
+          '0',     // 數字格式
+          '00'     // 雙位數字
+        ];
+        
+        let formatWorked = false;
+        for (let format of possibleFormats) {
+          try {
+            console.log(`嘗試格式: "${format}"`);
+            timeGround = DayTimeGround.getByName(format);
+            if (timeGround) {
+              console.log(`子時使用格式 "${format}" 成功!`);
+              formatWorked = true;
+              break;
+            }
+          } catch (e) {
+            console.log(`格式 "${format}" 失敗: ${e.message}`);
+            continue;
+          }
+        }
+        
+        if (!formatWorked) {
+          console.log('所有子時格式都失敗，檢查套件內部可用值...');
+          
+          // 嘗試直接訪問可能的靜態屬性
+          const staticProps = ['ZI', 'zi', '子', 'CHILD', 'child', 'RAT', 'rat'];
+          for (let prop of staticProps) {
+            if (DayTimeGround[prop]) {
+              timeGround = DayTimeGround[prop];
+              console.log(`使用靜態屬性 DayTimeGround.${prop} 成功`);
+              formatWorked = true;
+              break;
+            }
+          }
+        }
+        
+        if (!formatWorked) {
+          // 最後的嘗試：使用文字描述法創建配置
+          console.log('嘗試使用 DestinyConfigBuilder.withText 方法...');
+          try {
+            const textConfig = DestinyConfigBuilder.withText(`公曆${year}年${month}月${day}日子時${gender === 'F' || gender === 'female' || gender === '女' ? '女士' : '男士'}`);
+            return res.json({
+              success: true,
+              data: new DestinyBoard(textConfig),
+              debug: {
+                method: 'withText',
+                inputText: `公曆${year}年${month}月${day}日子時${gender === 'F' || gender === 'female' || gender === '女' ? '女士' : '男士'}`
+              }
+            });
+          } catch (e) {
+            console.error('withText 方法也失敗:', e);
+          }
+        }
+        
+      } else {
+        // 其他時辰正常處理
+        try {
+          timeGround = DayTimeGround.getByName(hour);
+          console.log('時辰轉換結果:', timeGround);
+        } catch (e) {
+          console.error('時辰轉換錯誤:', e);
+          return res.status(400).json({
+            error: '時辰轉換失敗',
+            message: e.message,
+            inputHour: hour,
+            suggestion: '請確認時辰格式正確，例如：子時、丑時、寅時等'
+          });
+        }
       }
       
       // 檢查轉換結果，特別處理子時
